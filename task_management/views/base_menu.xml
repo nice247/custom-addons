@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem
+        id="todo_task_root_menu"
+        name="Task Management"
+    />
+    <menuitem
+        id="todo_task_menu"
+        name="Todo Tasks"
+        parent="todo_task_root_menu"
+    />
+</odoo>

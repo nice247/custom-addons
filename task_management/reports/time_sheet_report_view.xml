@@ -1,0 +1,240 @@
+<odoo>
+    <record id="time_sheet_report" model="ir.actions.report">
+        <field name="name">Time Sheet Report</field>
+        <field name="model">todo.task</field>
+        <field name="report_type">qweb-html</field>
+        <field name="binding_model_id" ref="model_todo_task"/>
+        <field name="binding_type">report</field>
+        <field name="report_name">task_management.time_sheet</field>
+    </record>
+
+    <template id="time_sheet">
+    <t t-call="web.html_container">
+        <t t-call="web.external_layout">
+            <style>
+                .task-report {
+                    font-family: Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                }
+
+                .task-header {
+                    margin-bottom: 30px;
+                    padding-bottom: 15px;
+                    border-bottom: 2px solid #007bff;
+                }
+
+                .task-details {
+                    margin-bottom: 25px;
+                }
+
+                .detail-item {
+                    margin-bottom: 10px;
+                    display: flex;
+                }
+
+                .detail-label {
+                    font-weight: bold;
+                    width: 140px;
+                    flex-shrink: 0;
+                }
+
+                .detail-value {
+                    flex-grow: 1;
+                }
+
+                .timesheet-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 25px 0;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                }
+
+                .timesheet-table th {
+                    background: #343a40;
+                    color: white;
+                    padding: 12px;
+                    text-align: left;
+                    border: 1px solid #454d55;
+                    font-weight: bold;
+                }
+
+                .timesheet-table td {
+                    padding: 10px;
+                    border: 1px solid #dee2e6;
+                }
+
+                .timesheet-table tr:nth-child(even) {
+                    background: #f8f9fa;
+                }
+
+                .timesheet-table .center {
+                    text-align: center;
+                }
+
+                .timesheet-table .right {
+                    text-align: right;
+                }
+
+                .total-row {
+                    background: #e9ecef !important;
+                    font-weight: bold;
+                    border-top: 2px solid #495057;
+                }
+
+                .description-section {
+                    margin: 20px 0;
+                    padding: 20px;
+                    background: #f8f9fa;
+                    border-left: 4px solid #007bff;
+                    border-radius: 4px;
+                }
+
+                .time-summary {
+                    background: #e7f3ff;
+                    padding: 15px;
+                    border-radius: 5px;
+                    margin: 20px 0;
+                    border-left: 4px solid #007bff;
+                }
+
+                .time-summary-item {
+                    display: inline-block;
+                    margin-right: 30px;
+                    font-weight: bold;
+                }
+
+                .footer {
+                    margin-top: 40px;
+                    padding-top: 20px;
+                    border-top: 1px solid #ddd;
+                    text-align: center;
+                    color: #6c757d;
+                    font-size: 12px;
+                }
+
+                .status-badge {
+                    display: inline-block;
+                    padding: 4px 12px;
+                    border-radius: 12px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                }
+
+                .status-new { background: #d4edda; color: #155724; }
+                .status-in_progress { background: #fff3cd; color: #856404; }
+                .status-done { background: #d1ecf1; color: #0c5460; }
+                .status-overdue { background: #f8d7da; color: #721c24; }
+            </style>
+
+            <div class="task-report">
+                <!-- Task Header -->
+                <div class="task-header">
+                    <h1 style="margin: 0; color: #007bff;">TASK: <span t-esc="docs[0].name"/></h1>
+                </div>
+
+                <!-- Time Summary -->
+                <div class="time-summary">
+                    <span class="time-summary-item">
+                        Estimated Time: <span t-esc="docs[0].estimated_time or '0'"/> H
+                    </span>
+                    <span class="time-summary-item">
+                        Logged Time: <span t-esc="docs[0].total_timesheet_time"/> H
+                    </span>
+                    <span class="time-summary-item">
+                        Remaining Time: <span t-esc="docs[0].remaining_time"/> H
+                    </span>
+                </div>
+
+                <!-- Task Details -->
+                <div class="task-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Due Date:</span>
+                        <span class="detail-value" t-esc="docs[0].due_date or 'Not set'"/>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Assign To:</span>
+                        <span class="detail-value" t-esc="docs[0].assignee_id.name or 'Unassigned'"/>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Assign Date:</span>
+                        <span class="detail-value" t-esc="docs[0].assign_date"/>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Status:</span>
+                        <span class="detail-value">
+                            <span t-attf-class="status-badge status-{{ docs[0].status }}">
+                                <t t-esc="{'new': 'New', 'in_progress': 'In Progress', 'done': 'Done', 'overdue': 'Overdue'}.get(docs[0].status, docs[0].status)"/>
+                            </span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="description-section" t-if="docs[0].description">
+                    <h3 style="margin-top: 0; color: #007bff;">Description:</h3>
+                    <p style="margin: 0; white-space: pre-line;" t-esc="docs[0].description"/>
+                </div>
+
+                <!-- Timesheet Table -->
+                <table class="timesheet-table">
+                    <thead>
+                        <tr>
+                            <th colspan="5" style="text-align: center; background: #495057; font-size: 16px;">
+                                Timesheet
+                            </th>
+                        </tr>
+                        <tr>
+                            <th class="center" style="width: 10%;">#</th>
+                            <th style="width: 20%;">Date</th>
+                            <th style="width: 25%;">User</th>
+                            <th style="width: 35%;">Description</th>
+                            <th class="right" style="width: 10%;">Time (H)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Timesheet Lines -->
+                        <t t-set="timesheet_lines" t-value="docs[0].timesheet_ids.sorted(key=lambda r: r.date)"/>
+
+                        <tr t-foreach="timesheet_lines" t-as="line">
+                            <td class="center" t-esc="line_index + 1"/>
+                            <td t-esc="line.date"/>
+                            <td t-esc="line.user_id.name or 'No User'"/>
+                            <td t-esc="line.name or 'No Description'"/>
+                            <td class="right" t-esc="line.unit_amount"/>
+                        </tr>
+
+                        <!-- إذا لم يكن هناك timesheet -->
+                        <tr t-if="not timesheet_lines">
+                            <td colspan="5" style="text-align: center; color: #6c757d; font-style: italic;">
+                                No timesheet entries found
+                            </td>
+                        </tr>
+
+                        <!-- Total Row -->
+                        <tr class="total-row">
+                            <td colspan="4" style="text-align: right;"><strong>Total Time:</strong></td>
+                            <td class="right">
+                                <strong t-esc="docs[0].total_timesheet_time"/> H
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Footer -->
+                <div class="footer">
+                    <p>
+                        Generated on <span t-esc="datetime.datetime.now().strftime('%Y-%m-%d at %H:%M')"/> |
+                        Page <span t-esc="env.context.get('report_pagenumber', 1)"/> of <span t-esc="env.context.get('report_pagecount', 1)"/>
+                    </p>
+                    <p>For more information, please contact your system administrator</p>
+                </div>
+            </div>
+        </t>
+    </t>
+</template>
+
+
+
+</odoo>

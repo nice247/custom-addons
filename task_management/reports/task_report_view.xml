@@ -1,0 +1,148 @@
+<odoo>
+    <record id="task_report" model="ir.actions.report">
+        <field name="name">Task Report</field>
+        <field name="model">todo.task</field>
+        <field name="report_type">qweb-html</field>
+        <field name="binding_model_id" ref="model_todo_task"/>
+        <field name="binding_type">report</field>
+        <field name="report_name">task_management.todo_task_temp</field>
+    </record>
+
+    <template id="todo_task_temp">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <style>
+                    .task-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 20px 0;
+                    font-family: Arial, sans-serif;
+                    table-layout: fixed;
+                    }
+
+                    .task-table th {
+                    background: #343a40;
+                    color: white;
+                    padding: 12px;
+                    text-align: left;
+                    font-size: 16px;
+                    border: 1px solid #454d55;
+                    }
+
+                    .task-table td {
+                    padding: 10px;
+                    border: 1px solid #dee2e6;
+                    word-wrap: break-word;
+                    }
+
+                    .task-table tr:nth-child(even) {
+                    background: #f8f9fa;
+                    }
+
+                    .col-assignee {
+                    width: 20%;
+                    }
+
+                    .col-desc {
+                    width: 30%;
+                    }
+
+                    .col-name {
+                    width: 16.66%;
+                    }
+
+                    .col-status {
+                    width: 16.67%;
+                    }
+
+                    .col-date {
+                    width: 16.67%;
+                    }
+
+                    .empty-value {
+                    color: #999;
+                    font-style: italic;
+                    }
+
+                    .report-title {
+                    text-align: left;
+                    font-size: 20px;
+                    font-weight: bold;
+                    margin: 20px 0;
+                    }
+                </style>
+
+                <h1 class="report-title">Report Info:</h1>
+
+                <table class="task-table">
+                    <thead>
+                        <tr>
+                            <th class="col-assignee">Assignee</th>
+                            <th class="col-name">Task Name</th>
+                            <th class="col-status">Status</th>
+                            <th class="col-date">Due Date</th>
+                            <th class="col-desc">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="docs" t-as="task">
+                            <tr>
+                                <!-- Assignee -->
+                                <td class="col-assignee">
+                                    <t t-if="task.assignee_id and task.assignee_id.name">
+                                        <t t-esc="task.assignee_id.name"/>
+                                    </t>
+                                    <t t-else="">
+                                        <span class="empty-value">Unassigned</span>
+                                    </t>
+                                </td>
+
+                                <!-- Task Name -->
+                                <td class="col-name">
+                                    <t t-if="task.name">
+                                        <t t-esc="task.name"/>
+                                    </t>
+                                    <t t-else="">
+                                        <span class="empty-value">No Name</span>
+                                    </t>
+                                </td>
+
+                                <!-- Status -->
+                                <td class="col-status">
+                                    <t t-if="task.status">
+                                        <t t-esc="{'new': 'New', 'in_progress': 'In Progress', 'done': 'Done', 'overdue': 'Overdue'}.get(task.status, task.status)"/>
+                                    </t>
+                                    <t t-else="">
+                                        <span class="empty-value">Not Set</span>
+                                    </t>
+                                </td>
+
+                                <!-- Due Date -->
+                                <td class="col-date">
+                                    <t t-if="task.due_date">
+                                        <t t-esc="task.due_date"/>
+                                    </t>
+                                    <t t-else="">
+                                        <span class="empty-value">No Due Date</span>
+                                    </t>
+                                </td>
+
+                                <!-- Description -->
+                                <td class="col-desc">
+                                    <t t-if="task.description">
+                                        <t t-esc="task.description"/>
+                                    </t>
+                                    <t t-else="">
+                                        <span class="empty-value">No Description</span>
+                                    </t>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </t>
+        </t>
+    </template>
+
+
+</odoo>

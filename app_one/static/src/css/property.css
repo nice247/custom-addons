@@ -1,0 +1,14 @@
+.head_custom table thead > tr > th {
+    background-color: grey !important;
+    color: white;
+}
+
+.head_custom table {
+    width: 100%;
+    table-layout: fixed;
+    text-align: center;
+}
+.head_custom table th > td{
+    width: calc(100% / 8);
+    text-align: center;
+}

@@ -5,6 +5,7 @@
     'version': '1.0',
     'depends': ['base', 'mail'],
     'data': [
+        'security/security.xml',
         'security/ir.model.access.csv',
         'views/task_view.xml',
         'views/base_menu.xml',

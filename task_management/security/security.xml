@@ -1,0 +1,13 @@
+<odoo>
+    <record id="todo_manager" model="res.groups">
+        <field name="name">Task Manager</field>
+    </record>
+
+    <record id="todo_users" model="res.groups">
+        <field name="name">Task User</field>
+    </record>
+
+    <record id="todo_review" model="res.groups">
+        <field name="name">Task Reviewer</field>
+    </record>
+</odoo>

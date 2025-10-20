@@ -1,11 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="todo_task_action" model="ir.actions.act_window">
-        <field name="name">Todo Tasks</field>
-        <field name="res_model">todo.task</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
     <record id="todo_task_tree" model="ir.ui.view">
         <field name="name">todo task tree</field>
         <field name="model">todo.task</field>
@@ -35,27 +28,28 @@
             <form>
                 <sheet>
                     <header>
-                        <button name="action_done" type="object" class="btn-success" string="Done"/>
+                        <button name="action_done" type="object" class="btn-success" string="Done"
+                        invisible="status == 'done'"/>
                         <field name="status" widget="statusbar"/>
                     </header>
                     <div class="oe_title">
                         <label for="name"/>
                         <h1>
-                            <field name="name"/>
+                            <field name="name" readonly="status == 'done'"/>
                         </h1>
                     </div>
                     <group>
-                        <field name="assignee_id"/>
+                        <field name="assignee_id" readonly="status == 'done'"/>
                         <field name="assign_date"/>
-                        <field name="due_date"/>
+                        <field name="due_date" readonly="status == 'done'"/>
                     </group>
                     <group>
-                        <field name="description"/>
+                        <field name="description" readonly="status == 'done'"/>
                     </group>
 
                     <notebook>
                         <page string="Timesheets">
-                            <field name="timesheet_ids">
+                            <field name="timesheet_ids" readonly="status == 'done'">
                                 <tree editable="bottom">
                                     <field name="date"/>
                                     <field name="user_id"/>
@@ -108,5 +102,15 @@
         <field name="interval_type">days</field>
         <field name="numbercall">-1</field>
     </record>
+    <record id="todo_task_action" model="ir.actions.act_window">
+        <field name="name">todo task</field>
+        <field name="res_model">todo.task</field>
+    </record>
+    <menuitem
+            id="todo_task_menu_item"
+            name="All Tasks"
+            parent="todo_task_menu"
+            action="todo_task_action"
+    />
 
 </odoo>

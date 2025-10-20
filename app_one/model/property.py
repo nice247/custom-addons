@@ -72,6 +72,11 @@ class Property(models.Model):
         for record in property_ids:
             if record.expected_sale_date and record.expected_sale_date < fields.Date.today():
                record.is_late = True
+    def action_status_wizard(self):
+        action = self.env['ir.actions.actions']._for_xml_id('app_one.property_change_wizard_action')
+        action['context'] = {'default_property_id': self.id}
+        return action
+
 
 class PropertyLine(models.Model):
     _name = 'property.line'

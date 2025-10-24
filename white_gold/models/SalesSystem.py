@@ -1,5 +1,9 @@
+from datetime import date, datetime
 from odoo.exceptions import ValidationError
-from odoo import fields, models, api
+from odoo import fields, models, api, http
+from odoo.http import content_disposition, request
+import csv
+import io
 
 
 class Customer(models.Model):
@@ -21,6 +25,7 @@ class Product(models.Model):
     _description = 'Products'
     _rec_name = 'product_code'
 
+    active = fields.Boolean(default=True)
     inventory_id = fields.Many2one('inventory.custom', string='Inventory Item', required=True)
     name = fields.Selection(related='inventory_id.name', string='Product Name', readonly=True)
     product_code = fields.Selection(related='inventory_id.product_code', string='Product Code', readonly=True)
@@ -28,6 +33,19 @@ class Product(models.Model):
     unit = fields.Selection(related='inventory_id.unit', string='Unit', readonly=True)
     production_date = fields.Date(string='Production Date')
     expiration_date = fields.Date(string='Expiration Date')
+    is_expired = fields.Boolean(
+        string='Is Expired',
+        compute='_check_expire_date',
+        store=True
+    )
+
+    @api.depends('expiration_date')
+    def _check_expire_date(self):
+        for record in self.search([]):
+            if record.expiration_date and record.expiration_date < date.today():
+                record.is_expired = True
+            else:
+                record.is_expired = False
 
     @api.model
     def create(self, vals):
@@ -49,6 +67,7 @@ class Inventory(models.Model):
     _description = 'Inventory'
     _rec_name = 'product_code'
 
+    active = fields.Boolean(default=True)
     name = fields.Selection([
         ('milk', 'Milk'),
         ('cheese', 'Cheese'),
@@ -72,6 +91,13 @@ class Inventory(models.Model):
 
     quantity_available = fields.Integer(string='Available Quantity', compute='_compute_quantities', store=True)
     sold_quantity = fields.Integer(string='Sold Quantity', compute='_compute_quantities', store=True)
+
+    def action_export_inventory_csv(self):
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/web/export/inventory_csv',
+            'target': 'self',
+        }
 
     @api.depends('product_code')
     def _compute_quantities(self):
@@ -120,7 +146,7 @@ class SaleOrder(models.Model):
 
     state = fields.Selection([
         ('draft', 'Draft'),
-        ('done', 'Successful'),
+        ('done', 'Completed'),
         ('canceled', 'Canceled')],
         string='Status', default='draft')
 
@@ -128,32 +154,25 @@ class SaleOrder(models.Model):
         for order in self:
             order.state = 'canceled'
 
-    @api.depends('order_lines.amount', 'order_lines.quantity')
-    def _compute_totals(self):
-        for order in self:
-            total_amount = 0.0
-            total_quantity = 0
-            for line in order.order_lines:
-                total_amount += line.amount
-                total_quantity += line.quantity
-            order.total_amount = total_amount
-            order.total_quantity = total_quantity
-
     def action_done(self):
         for order in self:
             if not order.order_lines:
-                raise ValidationError("You have to add one product at least before confirming the order.")
+                raise ValidationError("Please add products before confirming the sale.")
+
             order.state = 'done'
 
             order._archive_sales_to_history(order)
+
 
             inventory_records = self.env['inventory.custom'].search([])
             for inventory in inventory_records:
                 inventory._compute_quantities()
 
+
             for line in order.order_lines:
                 product = line.product_id
                 qty = int(line.quantity)
+
                 if not product or not product.product_code:
                     continue
 
@@ -163,40 +182,47 @@ class SaleOrder(models.Model):
 
                 if custom_records:
                     custom_records.unlink()
-                else:
-                    print(f"There is no enough records to delete {product.product_code}")
+
 
             inventory_records = self.env['inventory.custom'].search([])
             for inventory in inventory_records:
                 inventory._compute_quantities()
 
     def _archive_sales_to_history(self, order):
-        existing_record = self.env['historical.sales'].search([('ref', '=', order.ref)])
-        if existing_record:
-            existing_record.unlink()
-
-        historical_sale = self.env['historical.sales'].create({
-            'ref': order.ref,
-            'sale_date': order.sale_date,
-            'customer_name': order.customer_id.name,
-            'customer_email': order.customer_id.email,
-            'customer_phone': order.customer_id.phone,
-        })
-
-        for line in order.order_lines:
-            self.env['historical.sale.lines'].create({
-                'historical_sale_id': historical_sale.id,
-                'product_name': line.product_id.name,
-                'product_code': line.product_id.product_code,
-                'quantity': line.quantity,
-                'unit_price': line.product_price,
-                'total_amount': line.amount,
+        try:
+            invoice_ref = self.env['ir.sequence'].next_by_code('historical.sales.invoice') or f"INV-{order.ref}"
+            historical_sale = self.env['historical.sales'].create({
+                'ref': invoice_ref,
+                'sale_order_ref': order.ref,
+                'sale_date': order.sale_date,
+                'customer_name': order.customer_id.name,
+                'customer_email': order.customer_id.email,
+                'customer_phone': order.customer_id.phone,
             })
+
+
+            for line in order.order_lines:
+                self.env['historical.sale.lines'].create({
+                    'historical_sale_id': historical_sale.id,
+                    'product_name': line.product_id.name,
+                    'product_code': line.product_id.product_code,
+                    'quantity': line.quantity,
+                    'unit_price': line.product_price,
+                    'total_amount': line.amount,
+                })
+
+            historical_sale._compute_totals()
+
+            return historical_sale
+
+        except Exception as e:
+            print(f"Error in _archive_sales_to_history: {str(e)}")
+            raise ValidationError(f"Failed to create historical record: {str(e)}")
 
     @api.model
     def create(self, vals):
         if vals.get('ref', 'New') == 'New':
-            vals['ref'] = self.env['ir.sequence'].next_by_code('sale_seq')
+            vals['ref'] = self.env['ir.sequence'].next_by_code('sale_seq') or 'New'
         return super(SaleOrder, self).create(vals)
 
 
@@ -213,7 +239,8 @@ class SaleOrderLine(models.Model):
     product_price = fields.Float(related='product_id.product_price', string='Product Price', readonly=True)
     quantity = fields.Integer(string='Quantity', required=True, default=1)
     amount = fields.Float(string='Amount', compute='_compute_amount', store=True)
-    available_qty = fields.Integer(related='product_id.inventory_id.quantity_available', string='Available Quantity', readonly=True)
+    available_qty = fields.Integer(related='product_id.inventory_id.quantity_available', string='Available Quantity',
+                                   readonly=True)
 
     @api.depends('quantity', 'product_price')
     def _compute_amount(self):
@@ -240,10 +267,11 @@ class HistoricalSales(models.Model):
     _order = 'sale_date desc'
 
     ref = fields.Char(string='Reference', readonly=True)
+    sale_order_ref = fields.Char(string='Sale Order Reference', readonly=True)
     sale_date = fields.Datetime(string='Sale Date', readonly=True)
 
     sale_line_ids = fields.One2many('historical.sale.lines', 'historical_sale_id', string='Orders', readonly=True)
-
+    active = fields.Boolean(default=True)
     customer_name = fields.Char(string='Customer Name', readonly=True)
     customer_email = fields.Char(string='Customer Email', readonly=True)
     customer_phone = fields.Char(string='Customer Phone', readonly=True)
@@ -251,6 +279,13 @@ class HistoricalSales(models.Model):
 
     total_quantity = fields.Integer(string='Total Quantity', compute='_compute_totals', store=True)
     total_amount = fields.Float(string='Total Amount', compute='_compute_totals', store=True)
+
+    def action_export_sales_csv(self):
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/web/export/sales_csv',
+            'target': 'self',
+        }
 
     @api.depends('sale_line_ids.quantity', 'sale_line_ids.total_amount')
     def _compute_totals(self):
@@ -263,14 +298,15 @@ class HistoricalSaleLines(models.Model):
     _name = 'historical.sale.lines'
     _description = 'Historical Sale Lines'
 
-    historical_sale_id = fields.Many2one('historical.sales', string='Historical Sale', required=True, ondelete='cascade')
+    historical_sale_id = fields.Many2one('historical.sales', string='Historical Sale', required=True,
+                                         ondelete='cascade')
 
     product_name = fields.Selection([
         ('milk', 'Milk'),
         ('cheese', 'Cheese'),
         ('yogurt', 'Yogurt'),
         ('cream', 'Cream'),
-        ('butter', 'Butter'),],
+        ('butter', 'Butter'), ],
         string='Product Name', readonly=True)
 
     product_code = fields.Selection([
@@ -278,9 +314,100 @@ class HistoricalSaleLines(models.Model):
         ('CHS001', 'CHS001'),
         ('YGT001', 'YGT001'),
         ('CRM001', 'CRM001'),
-        ('BTR001', 'BTR001'),],
+        ('BTR001', 'BTR001'), ],
         string='Product Code', readonly=True)
 
     quantity = fields.Integer(string='Quantity', readonly=True)
     unit_price = fields.Float(string='Unit Price', readonly=True)
     total_amount = fields.Float(string='Total Amount', readonly=True)
+
+
+class CSVExportController(http.Controller):
+
+    @http.route('/web/export/inventory_csv', type='http', auth="user")
+    def export_inventory_csv(self, **kwargs):
+        try:
+            output = io.StringIO()
+            writer = csv.writer(output)
+
+            writer.writerow([
+                'Product Code', 'Product Name', 'Product Price',
+                'Unit', 'Available Quantity', 'Sold Quantity', 'Created Date'
+            ])
+
+            inventory_records = request.env['inventory.custom'].search([])
+
+            for record in inventory_records:
+                writer.writerow([
+                    record.product_code or '',
+                    dict(record._fields['name'].selection).get(record.name) if record.name else '',
+                    record.product_price or 0,
+                    dict(record._fields['unit'].selection).get(record.unit) if record.unit else '',
+                    record.quantity_available or 0,
+                    record.sold_quantity or 0,
+                    record.create_date.strftime('%Y-%m-%d %H:%M:%S') if record.create_date else ''
+                ])
+
+            output.seek(0)
+            csv_data = output.getvalue()
+            output.close()
+
+            filename = 'inventory_report_{}.csv'.format(datetime.now().strftime("%Y%m%d_%H%M%S"))
+
+            return request.make_response(
+                csv_data,
+                headers=[
+                    ('Content-Type', 'text/csv'),
+                    ('Content-Disposition', content_disposition(filename)),
+                ]
+            )
+        except Exception as e:
+            return request.make_response("Error during export", headers=[('Content-Type', 'text/plain')])
+
+    @http.route('/web/export/sales_csv', type='http', auth="user")
+    def export_sales_csv(self, **kwargs):
+        try:
+            output = io.StringIO()
+            writer = csv.writer(output)
+
+            # Sales orders header
+            writer.writerow([
+                'Reference', 'Customer Name', 'Customer Type', 'Sale Date',
+                'Status', 'Total Amount', 'Total Quantity', 'Customer Phone'
+            ])
+
+            sales_records = request.env['sale.order.custom'].search([])
+
+            for record in sales_records:
+                customer_type = ''
+                if record.customer_id and record.customer_id.customer_type:
+                    customer_type = dict(record.customer_id._fields['customer_type'].selection).get(
+                        record.customer_id.customer_type)
+
+                writer.writerow([
+                    record.ref or '',
+                    record.customer_id.name if record.customer_id else '',
+                    customer_type,
+                    record.sale_date.strftime('%Y-%m-%d %H:%M:%S') if record.sale_date else '',
+                    record.state,
+                    record.total_amount or 0,
+                    record.total_quantity or 0,
+                    record.customer_phone or ''
+                ])
+
+            output.seek(0)
+            csv_data = output.getvalue()
+            output.close()
+
+            filename = 'sales_report_{}.csv'.format(datetime.now().strftime("%Y%m%d_%H%M%S"))
+
+            return request.make_response(
+                csv_data,
+                headers=[
+                    ('Content-Type', 'text/csv'),
+                    ('Content-Disposition', content_disposition(filename)),
+                ]
+            )
+        except Exception as e:
+            _logger.error("Error exporting sales: %s", str(e))
+            return request.make_response("Error during export", headers=[('Content-Type', 'text/plain')])

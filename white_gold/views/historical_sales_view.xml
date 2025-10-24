@@ -3,7 +3,11 @@
         <field name="name">historical.sales.tree</field>
         <field name="model">historical.sales</field>
         <field name="arch" type="xml">
-            <tree>
+            <tree create="false" delete="false">
+                <header>
+                    <button name="action_export_sales_csv" string="Export CSV" type="object"
+                            class="btn-success"/>
+                </header>
                 <field name="ref"/>
                 <field name="customer_name"/>
                 <field name="sale_date"/>
@@ -13,12 +17,11 @@
         </field>
     </record>
 
-    <!-- Form View for Historical Sales -->
     <record id="view_historical_sales_form" model="ir.ui.view">
         <field name="name">historical.sales.form</field>
         <field name="model">historical.sales</field>
         <field name="arch" type="xml">
-            <form>
+            <form create="false" delete="false">
                 <sheet>
                     <group>
                         <group>
@@ -56,11 +59,5 @@
         <field name="name">Historical Sales</field>
         <field name="res_model">historical.sales</field>
     </record>
-    <menuitem
-            id="historical_sales_menu_item"
-            name="Historical Sales"
-            parent="milk_product_menu"
-            action="historical_sales_action"
-    />
 
 </odoo>

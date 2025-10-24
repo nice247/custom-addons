@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem
-        id="whit_gold_root_menu"
-        name="Nile Dairy and Foods Co."
-    />
-    <menuitem
-        id="milk_product_menu"
-        name="Lists"
-        parent="whit_gold_root_menu"
-    />
+    <menuitem id="nile_dairy_root_menu" name="Nile Dairy" action="nile_dairy_dashboard_action"/>
+
+    <menuitem id="dashboard_menu_item" name="Home" parent="nile_dairy_root_menu" sequence="1"
+              action="nile_dairy_dashboard_action"/>
+
+
 </odoo>

@@ -5,11 +5,12 @@
     'category': '',
     'summary': '',
     'description': '',
-    'depends': ['base', 'mail', ],
+    'depends': ['base', 'mail','web'],
     'data': [
         'security/ir.model.access.csv',
         'views/sequence.xml',
         'views/base_menu.xml',
+        'views/dashboard_view.xml',
         'views/sale_order_view.xml',
         'views/customer_view.xml',
         'views/inventory_view.xml',

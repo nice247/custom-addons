@@ -10,7 +10,7 @@
                 <field name="sale_price"/>
                 <field name="garden"/>
                 <field name="bedrooms"/>
-                <field name="is_late" invisible="1"/>
+                <field name="is_late" invisible="True"/>
                 <field name="facades" optional="1"/>
                 <field name="expected_price" optional="1"/>
                 <field name="postcode" optional="1"/>

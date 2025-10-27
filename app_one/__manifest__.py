@@ -3,7 +3,7 @@
     'author': 'Baha',
     'category': '',
     'version': '1.0',
-    'depends': ['base', 'mail'],
+    'depends': ['base', 'mail','sale'],
     'data': [
         'security/ir.model.access.csv',
         'views/base_menu.xml',
@@ -16,5 +16,6 @@
     'assets': {
         'web.assets_backend': ['app_one/static/src/css/property.css']
     },
-    'application': True
+    'application': True,
+    'installable': True,
 }

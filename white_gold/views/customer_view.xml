@@ -55,6 +55,7 @@
     <record id="customer_action" model="ir.actions.act_window">
         <field name="name">Customers</field>
         <field name="res_model">customer.custom</field>
+        <field name="limit">80</field>
     </record>
 
 </odoo>

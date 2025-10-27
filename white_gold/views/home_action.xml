@@ -1,0 +1,8 @@
+<odoo>
+    <record id="action_white_gold_home" model="ir.actions.act_window">
+        <field name="name">Nile Dairy</field>
+        <field name="res_model">sale.order.custom</field>
+        <field name="view_mode">tree</field>
+        <field name="target">current</field>
+    </record>
+</odoo>

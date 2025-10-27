@@ -8,6 +8,8 @@
                     <button name="action_export_inventory_csv" string="Export CSV" type="object"
                             class="btn-success"/>
                 </header>
+
+                <field name="product_code"/>
                 <field name="name" string="Product Name"/>
                 <field name="product_price" string="Price"/>
                 <field name="sold_quantity" string="Sold Quantity"/>

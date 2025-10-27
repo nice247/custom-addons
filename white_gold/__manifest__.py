@@ -5,17 +5,17 @@
     'category': '',
     'summary': '',
     'description': '',
-    'depends': ['base', 'mail','web'],
+    'depends': ['base', 'mail', 'web'],
     'data': [
         'security/ir.model.access.csv',
         'views/sequence.xml',
-        'views/base_menu.xml',
-        'views/dashboard_view.xml',
-        'views/sale_order_view.xml',
         'views/customer_view.xml',
         'views/inventory_view.xml',
         'views/product_view.xml',
+        'views/sale_order_view.xml',
         'views/historical_sales_view.xml',
+        'views/home_action.xml',
+        'views/base_menu.xml',
         'reports/inventory_report_view.xml',
         'reports/oredes_report_view.xml',
         'reports/sales_operatios_report_view.xml',
@@ -23,5 +23,4 @@
     ],
     'installable': True,
     'application': True,
-
 }

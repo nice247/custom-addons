@@ -10,7 +10,7 @@
                 <field name="expiration_date"/>
                 <field name="product_price"/>
                 <field name="unit"/>
-                <field name="is_expired" invisible="True"/>
+                <field name="is_expired" invisible="true" optional="1"/>
             </tree>
         </field>
     </record>

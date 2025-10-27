@@ -1,9 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="nile_dairy_root_menu" name="Nile Dairy" action="nile_dairy_dashboard_action"/>
+    <menuitem id="nile_dairy_root_menu" name="Nile Dairy" action="white_gold.action_white_gold_home" />
 
-    <menuitem id="dashboard_menu_item" name="Home" parent="nile_dairy_root_menu" sequence="1"
-              action="nile_dairy_dashboard_action"/>
+    <menuitem id="sales_item" name="Sale Management" parent="nile_dairy_root_menu" sequence="1"/>
+    <menuitem id="products_item" name="Production Management" parent="nile_dairy_root_menu" sequence="2"/>
+
+    <menuitem id="customer_item" name="Customers" parent="sales_item" sequence="1"
+              action="customer_action"/>
+    <menuitem id="sales_order_item" name="Sale Orders" parent="sales_item" sequence="2"
+              action="sale_order_action"/>
+    <menuitem id="invoice_item" name="Invoices" parent="sales_item" sequence="3"
+              action="historical_sales_action"/>
+
+
+    <menuitem id="product_item" name="Products" parent="products_item" sequence="1"
+              action="product_action"/>
+    <menuitem id="inventory_item" name="Inventory" parent="products_item" sequence="2"
+              action="inventory_action"/>
+
 
 
 </odoo>

@@ -26,13 +26,18 @@
         <field name="arch" type="xml">
             <form>
                 <sheet>
+                    <div name="button_box" class="oe_botton_box">
+                        <button name="action_open_owner" type="object"
+                                icon="fa-user" string="Owner"
+                                invisible="not owner_id"/>
+                    </div>
                     <header>
                         <button name="action_draft" type="object" class="btn-primary" string="Set Draft"
-                        invisible="status in ('draft', 'closed')"/>
+                                invisible="status in ('draft', 'closed')"/>
                         <button name="action_pending" type="object" class="btn-secondary" string="Set Pending"
-                        invisible="status != 'draft'"/>
+                                invisible="status != 'draft'"/>
                         <button name="action_approved" type="object" class="btn-success" string="Set Approved"
-                        invisible="status != 'pending'"/>
+                                invisible="status != 'pending'"/>
                         <field name="status" widget="statusbar"/>
                     </header>
                     <div class="oe_title">
@@ -41,27 +46,29 @@
                             <field name="name" readonly="status == 'closed'"/>
                         </h1>
                     </div>
-                    <group string="General Info: " readonly="status == 'closed'">
-                        <field name="date_availability" readonly="status == 'closed'"/>
-                        <field name="expected_sale_date" readonly="status == 'closed'"/>
-                        <field name="is_late" invisible="1" readonly="status == 'closed'"/>
-                        <field name="expected_price" readonly="status == 'closed'"/>
-                        <field name="sale_price" readonly="status == 'closed'"/>
-                        <field name="deft" readonly="status == 'closed'"/>
-                        <field name="living_area" readonly="status == 'closed'"/>
-                        <field name="facades" readonly="status == 'closed'"/>
-                        <field name="postcode" readonly="status == 'closed'"/>
-                        <field name="description" readonly="status == 'closed'"/>
-                    </group>
+                    <group>
+                        <group string="General Info: " readonly="status == 'closed'">
+                            <field name="date_availability" readonly="status == 'closed'"/>
+                            <field name="expected_sale_date" readonly="status == 'closed'"/>
+                            <field name="is_late" invisible="1" readonly="status == 'closed'"/>
+                            <field name="expected_price" readonly="status == 'closed'"/>
+                            <field name="sale_price" readonly="status == 'closed'"/>
+                            <field name="deft" readonly="status == 'closed'"/>
+                            <field name="living_area" readonly="status == 'closed'"/>
+                            <field name="facades" readonly="status == 'closed'"/>
+                            <field name="postcode" readonly="status == 'closed'"/>
+                            <field name="description" readonly="status == 'closed'"/>
+                        </group>
 
-                    <group string="Additional Info: ">
-                        <field name="owner_id" readonly="status == 'closed'"/>
-                        <field name="owner_phone" readonly="status == 'closed'"/>
-                        <field name="garden" readonly="status == 'closed'"/>
-                        <field name="garden_area" readonly="status == 'closed'"/>
-                        <field name="garden_orientation" readonly="status == 'closed'"/>
-                        <field name="bedrooms" readonly="status == 'closed'"/>
-                        <field name="garage" readonly="status == 'closed'"/>
+                        <group string="Additional Info: ">
+                            <field name="owner_id" readonly="status == 'closed'"/>
+                            <field name="owner_phone" readonly="status == 'closed'"/>
+                            <field name="garden" readonly="status == 'closed'"/>
+                            <field name="garden_area" readonly="status == 'closed'"/>
+                            <field name="garden_orientation" readonly="status == 'closed'"/>
+                            <field name="bedrooms" readonly="status == 'closed'"/>
+                            <field name="garage" readonly="status == 'closed'"/>
+                        </group>
                     </group>
                     <notebook>
                         <page string="Bedrooms" readonly="status == 'closed'">
